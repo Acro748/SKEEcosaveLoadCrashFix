@@ -12,30 +12,34 @@ namespace Mus {
     static RE::FormID ReferenceFormID = 0;
 
     static std::vector<RE::VMHandle> NodeTransformKeys_ErrorHandles;
+    static std::vector<RE::VMHandle> OverrideRegistration_StringTableItem_ErrorHandles;
     static std::vector<RE::FormID> BodyMorphData_morphName_ErrorFormIDs;
     static std::vector<RE::FormID> BodyMorphData_keyName_ErrorFormIDs;
 
     static void __stdcall NodeTransformKeys_Error()
     {
         NodeTransformKeys_ErrorHandles.push_back(ReferenceHandle);
-        ReferenceHandle = 0;
+    }
+
+    static void __stdcall OverrideRegistration_StringTableItem_Error()
+    {
+        OverrideRegistration_StringTableItem_ErrorHandles.push_back(ReferenceHandle);
     }
 
     static void __stdcall BodyMorphData_morphName_Error()
     {
         BodyMorphData_morphName_ErrorFormIDs.push_back(ReferenceFormID);
-        ReferenceFormID = 0;
     }
 
     static void __stdcall BodyMorphData_keyName_Error()
     {
         BodyMorphData_keyName_ErrorFormIDs.push_back(ReferenceFormID);
-        ReferenceFormID = 0;
     }
 
     static void InitError()
     {
         NodeTransformKeys_ErrorHandles.clear();
+        OverrideRegistration_StringTableItem_ErrorHandles.clear();
         BodyMorphData_morphName_ErrorFormIDs.clear();
         BodyMorphData_keyName_ErrorFormIDs.clear();
     }
@@ -71,12 +75,42 @@ namespace Mus {
                         const auto form = policy->GetObjectForHandle(RE::FormType::Reference, handle);
                         const auto ref = form ? form->As<RE::TESObjectREFR>() : nullptr;
                         if (ref)
-                            log::error("Invalid NodeTransformKeys : {:x} {}", ref->formID, ref->GetName());
+                            log::error("Invalid NodeTransformKeys : {:X} {}", ref->formID, ref->GetName());
                         else
                             log::error("Invalid NodeTransformKeys : invalid reference");
                     }
                     else
                         log::error("Invalid NodeTransformKeys : invalid reference");
+                }
+            }
+            else
+                log::error("Unable to get IObjectHandlePolicy");
+        }
+        if (OverrideRegistration_StringTableItem_ErrorHandles.size() > 0)
+        {
+            const std::string msg1 = "Invalid OverrideRegistration_StringTableItem : " + std::to_string(OverrideRegistration_StringTableItem_ErrorHandles.size());
+            const std::string msg2 = "So skip it instead of crash";
+            log::error("{}", msg1);
+            log::error("{}", msg2);
+            RE::DebugMessageBox((msg1 + "\n" + msg2).c_str());
+
+            const auto vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+            const auto policy = vm ? vm->GetObjectHandlePolicy() : nullptr;
+            if (policy)
+            {
+                for (const auto& handle : OverrideRegistration_StringTableItem_ErrorHandles)
+                {
+                    if (handle != 0)
+                    {
+                        const auto form = policy->GetObjectForHandle(RE::FormType::Reference, handle);
+                        const auto ref = form ? form->As<RE::TESObjectREFR>() : nullptr;
+                        if (ref)
+                            log::error("Invalid OverrideRegistration<StringTableItem> : {:X} {}", ref->formID, ref->GetName());
+                        else
+                            log::error("Invalid OverrideRegistration<StringTableItem> : invalid reference");
+                    }
+                    else
+                        log::error("Invalid OverrideRegistration<StringTableItem> : invalid reference");
                 }
             }
             else
@@ -96,12 +130,12 @@ namespace Mus {
                 {
                     const auto ref = RE::TESForm::LookupByID<RE::TESObjectREFR>(formID);
                     if (ref)
-                        log::error("Invalid BodyMorphData morphName : {:x} {}", ref->formID, ref->GetName());
+                        log::error("Invalid BodyMorphData morphName : {:X} {}", ref->formID, ref->GetName());
                     else
                         log::error("Invalid BodyMorphData morphName : invalid reference");
                 }
                 else
-                    log::error("Invalid NodeTransformKeys : invalid reference");
+                    log::error("Invalid BodyMorphData morphName : invalid reference");
             }
         }
         if (BodyMorphData_keyName_ErrorFormIDs.size() > 0)
@@ -118,12 +152,12 @@ namespace Mus {
                 {
                     const auto ref = RE::TESForm::LookupByID<RE::TESObjectREFR>(formID);
                     if (ref)
-                        log::error("Invalid BodyMorphData keyName : {:x} {}", ref->formID, ref->GetName());
+                        log::error("Invalid BodyMorphData keyName : {:X} {}", ref->formID, ref->GetName());
                     else
                         log::error("Invalid BodyMorphData keyName : invalid reference");
                 }
                 else
-                    log::error("Invalid NodeTransformKeys : invalid reference");
+                    log::error("Invalid BodyMorphData keyName : invalid reference");
             }
         }
     }
@@ -198,19 +232,19 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found NodeTransformRegistrationMapHolder::Load::morphName Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformRegistrationMapHolder::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0x13;
-                log::info("Found NodeTransformRegistrationMapHolder::Load::morphName Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformRegistrationMapHolder::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::int32_t offset1 = *reinterpret_cast<std::int32_t*>(hookAddr + 0x3);
                 const std::uintptr_t target1Addr = (hookAddr + 0x7) + offset1;
-                log::info("Found NodeTransformRegistrationMapHolder::Load::morphName Target1 Address {:x}", target1Addr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformRegistrationMapHolder::Load Target1 Address {:X}", target1Addr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t lea2Addr = hookAddr + 0xC;
                 const std::int32_t offset2 = *reinterpret_cast<int32_t*>(lea2Addr + 0x3);
                 const std::uintptr_t target2Addr = (lea2Addr + 0x7) + offset2;
-                log::info("Found NodeTransformRegistrationMapHolder::Load::morphName Target2 Address {:x}", target2Addr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformRegistrationMapHolder::Load Target2 Address {:X}", target2Addr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 struct Patch : Xbyak::CodeGenerator
                 {
@@ -294,10 +328,10 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found ActorMorphs::Load Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found ActorMorphs::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0xF;
-                log::info("Found ActorMorphs::Load Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found ActorMorphs::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 struct Patch : Xbyak::CodeGenerator
                 {
@@ -387,25 +421,25 @@ namespace Mus {
         {
             bool isSuccess = false;
 
-            //const std::uintptr_t hookAddr = baseAddr + 0x75240;
-            //const std::uintptr_t returnAddr = baseAddr + 0x7524E;
-            //const std::uintptr_t escapeAddr = baseAddr + 0x753D0;
+            // const std::uintptr_t hookAddr = baseAddr + 0x75240;
+            // const std::uintptr_t returnAddr = baseAddr + 0x7524E;
+            // const std::uintptr_t escapeAddr = baseAddr + 0x753D0;
 
             const char* pattern = "48 8B 38 48 8B 48 08 4C 89 28 4C 89 68 08 48 89 7D ? 48 89 4D ? 48 8B 5D ? 48 85 DB";
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found NodeTransformKeys::Load Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformKeys::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0xE;
-                log::info("Found NodeTransformKeys::Load Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformKeys::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const char* escapePattern = "FF C6 3B 75 ? 0F 82 ? ? ? ? 40 0F B6 C7 48 8B 9C 24 ? ? ? ? 48 81 C4 C0 00 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
                 const std::uintptr_t preEscapeAddr = FindAddressByPattern(a_skee, escapePattern);
                 if (preEscapeAddr)
                 {
                     const std::uintptr_t escapeAddr = preEscapeAddr + 0xF;
-                    log::info("Found NodeTransformKeys::Load Escape Address {:x}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                    log::info("Found NodeTransformKeys::Load Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                     struct Patch : Xbyak::CodeGenerator
                     {
@@ -489,6 +523,114 @@ namespace Mus {
                 log::error("Failed to NodeTransformKeys::Load patch");
         }
 
+        // sub_180091D60 / OverrideRegistration<StringTableItem>::Load
+        {
+            bool isSuccess = false;
+
+            //const std::uintptr_t hookAddr = baseAddr + 0x91E5E;
+            //const std::uintptr_t returnAddr = baseAddr + 0x91E6E;
+            //const std::uintptr_t escapeAddr = baseAddr + 0x91F80;
+
+            const char* pattern = "49 8B 4F 38 48 23 4F 20 48 C1 E1 04 49 8B 47 20 48 03 C1 48 8B 48 08 49 8B 57 10 48 3B CA 74 ? 48 8B 00 48 3B 79 10 74 ? 48 3B C8";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found OverrideRegistration<StringTableItem>::Load Hook Address: {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x10;
+                log::info("Found OverrideRegistration<StringTableItem>::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "48 8B 9C 24 ? ? ? ? 48 81 C4 80 00 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3 4C 8D 4D ? 48 8D 15 ? ? ? ? 48 8D 0D ? ? ? ? E8 ? ? ? ? B0 01 EB ?";
+                const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (escapeAddr)
+                {
+                    log::info("Found OverrideRegistration<StringTableItem>::Load Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            // check nullptr
+                            test(rdi, rdi);
+                            jz("IsNull");
+
+                            mov(rcx, ptr[r15 + 0x38]);
+                            and_(rcx, ptr[rdi + 0x20]);
+                            shl(rcx, 4);
+                            mov(rax, ptr[r15 + 0x20]);
+
+                            push(rax);
+                            mov(rax, retAddr);
+                            xchg(qword[rsp], rax);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(OverrideRegistration_StringTableItem_Error));
+                    patch.ready();
+
+                    std::uint8_t jumpPayload[16] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x90, 0x90
+                    };
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 16, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 16);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 16, oldProtect, &oldProtect);
+                        isSuccess = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("OverrideRegistration<StringTableItem>::Load patch done");
+            else
+                log::error("Failed to OverrideRegistration<StringTableItem>::Load patch");
+        }
+
         // sub_18000FE90 / BodyMorphData::Load / morphName
         {
             bool isSuccess = false;
@@ -501,16 +643,16 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found BodyMorphData::Load::morphName Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found BodyMorphData::Load::morphName Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0x10;
-                log::info("Found BodyMorphData::Load::morphName Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found BodyMorphData::Load::morphName Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const char* escapePattern = "B0 01 EB 02 32 C0 48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 48 81 C4 B0 02 00 00";
                 const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
                 if (escapeAddr)
                 {
-                    log::info("Found BodyMorphData::Load::morphName Escape Address {:x}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                    log::info("Found BodyMorphData::Load::morphName Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
                     struct Patch : Xbyak::CodeGenerator
                     {
                         Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
@@ -606,16 +748,16 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found BodyMorphData::Load::keyName Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found BodyMorphData::Load::keyName Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0xE;
-                log::info("Found BodyMorphData::Load::keyName Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found BodyMorphData::Load::keyName Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const char* escapePattern = "B0 01 EB 02 32 C0 48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 48 81 C4 B0 02 00 00";
                 const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
                 if (escapeAddr)
                 {
-                    log::info("Found BodyMorphData::Load::keyName Escape Address {:x}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                    log::info("Found BodyMorphData::Load::keyName Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
                     struct Patch : Xbyak::CodeGenerator
                     {
                         Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
@@ -698,6 +840,1273 @@ namespace Mus {
         }
     }
 
+    bool VR_New_RefInfo(HMODULE a_skee)
+    {
+        bool isPatched = false;
+        // sub_180079E90 / NodeTransformRegistrationMapHolder::Load
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x79EFB;
+            // const std::uintptr_t returnAddr = baseAddr + 0x79F0E;
+            // const std::uintptr_t target1Addr = baseAddr + 0x56F80;
+            // const std::uintptr_t target2Addr = baseAddr + 0x7A200;
+
+            const char* pattern = "4C 8D 3D ? ? ? ? 4C 89 7C 24 ? 4C 8D 0D ? ? ? ? BA 80 00 00 00 41 B8 02 00 00 00 48 8D 4C 24 ? E8 ? ? ? ? 90 4C 8B CB";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found NodeTransformRegistrationMapHolder::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x13;
+                log::info("Found NodeTransformRegistrationMapHolder::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::int32_t offset1 = *reinterpret_cast<std::int32_t*>(hookAddr + 0x3);
+                const std::uintptr_t target1Addr = (hookAddr + 0x7) + offset1;
+                log::info("Found NodeTransformRegistrationMapHolder::Load Target1 Address {:X}", target1Addr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t lea2Addr = hookAddr + 0xC;
+                const std::int32_t offset2 = *reinterpret_cast<int32_t*>(lea2Addr + 0x3);
+                const std::uintptr_t target2Addr = (lea2Addr + 0x7) + offset2;
+                log::info("Found NodeTransformRegistrationMapHolder::Load Target2 Address {:X}", target2Addr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                struct Patch : Xbyak::CodeGenerator
+                {
+                    Patch(std::uintptr_t retAddr, std::uintptr_t funcAddr, std::uintptr_t tar1Addr, std::uintptr_t tar2Addr)
+                    {
+                        // backup
+                        pushfq();
+                        push(rax);
+                        push(rcx);
+                        push(rdx);
+                        push(r8);
+                        push(r9);
+                        push(r10);
+                        push(r11);
+
+                        mov(rcx, qword[rsp + 0x78]);
+
+                        push(rbp);
+                        mov(rbp, rsp);
+                        and_(rsp, -16);
+                        sub(rsp, 0x20);
+
+                        // get ref handle
+                        mov(rax, funcAddr);
+                        call(rax);
+
+                        mov(rsp, rbp);
+                        pop(rbp);
+
+                        // revert
+                        pop(r11);
+                        pop(r10);
+                        pop(r9);
+                        pop(r8);
+                        pop(rdx);
+                        pop(rcx);
+                        pop(rax);
+                        popfq();
+
+                        mov(r15, tar1Addr);
+                        mov(qword[rsp + 0x20], r15);
+                        mov(r9, tar2Addr);
+
+                        push(rax);
+                        mov(rax, retAddr);
+                        xchg(qword[rsp], rax);
+                        ret();
+                    }
+                };
+
+                static Patch patch(returnAddr, reinterpret_cast<std::uintptr_t>(GetHandle), target1Addr, target2Addr);
+                patch.ready();
+                std::uint8_t jumpPayload[19] = {
+                    0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x90, 0x90, 0x90, 0x90, 0x90};
+                *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                DWORD oldProtect;
+                if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 19, PAGE_EXECUTE_READWRITE, &oldProtect))
+                {
+                    memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 19);
+                    VirtualProtect(reinterpret_cast<void*>(hookAddr), 19, oldProtect, &oldProtect);
+                    isSuccess = true;
+                    isPatched = true;
+                }
+            }
+
+            if (isSuccess)
+                log::info("NodeTransformRegistrationMapHolder::Load hook handle done");
+            else
+                log::error("Failed to NodeTransformRegistrationMapHolder::Load hook handle");
+        }
+
+        // sub_180010860 / ActorMorphs::Load
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x108B5;
+            // const std::uintptr_t returnAddr = baseAddr + 0x108C6;
+
+            const char* pattern = "33 F6 48 89 74 24 ? 48 89 74 24 ? B9 38 00 00 00 E8 ? ? ? ? 48 89 00 48 89 40 08 48 89 40 10 66 C7 40 18 01 01 48 89 44 24 ?";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found ActorMorphs::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x11;
+                log::info("Found ActorMorphs::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                struct Patch : Xbyak::CodeGenerator
+                {
+                    Patch(std::uintptr_t retAddr, std::uintptr_t funcAddr)
+                    {
+                        // backup
+                        pushfq();
+                        push(rax);
+                        push(rcx);
+                        push(rdx);
+                        push(r8);
+                        push(r9);
+                        push(r10);
+                        push(r11);
+
+                        cmp(r12d, 3);
+                        jb("IsHandle");
+
+                        mov(ecx, dword[rsp + 0x90]);
+                        jmp("GetFormID");
+
+                        L("IsHandle");
+                        // use low 32bit
+                        mov(rcx, qword[rsp + 0x98]);
+
+                        L("GetFormID");
+                        // get formID
+                        push(rbp);
+                        mov(rbp, rsp);
+                        and_(rsp, -16);
+                        sub(rsp, 0x20);
+
+                        mov(rax, funcAddr);
+                        call(rax);
+
+                        mov(rsp, rbp);
+                        pop(rbp);
+
+                        // revert
+                        pop(r11);
+                        pop(r10);
+                        pop(r9);
+                        pop(r8);
+                        pop(rdx);
+                        pop(rcx);
+                        pop(rax);
+                        popfq();
+
+                        xor_(esi, esi);
+                        mov(qword[rsp + 0x40], rsi);
+                        mov(qword[rsp + 0x48], rsi);
+                        mov(ecx, 0x38);
+
+                        push(rax);
+                        mov(rax, retAddr);
+                        xchg(qword[rsp], rax);
+                        ret();
+                    }
+                };
+
+                static Patch patch(returnAddr, reinterpret_cast<std::uintptr_t>(GetFormID));
+                patch.ready();
+                std::uint8_t jumpPayload[17] = {
+                    0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x90, 0x90, 0x90};
+                *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                DWORD oldProtect;
+                if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 17, PAGE_EXECUTE_READWRITE, &oldProtect))
+                {
+                    memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 17);
+                    VirtualProtect(reinterpret_cast<void*>(hookAddr), 17, oldProtect, &oldProtect);
+                    isSuccess = true;
+                    isPatched = true;
+                }
+            }
+
+            if (isSuccess)
+                log::info("ActorMorphs::Load hook formID done");
+            else
+                log::error("Failed to ActorMorphs::Load hook formID");
+        }
+
+        return isPatched;
+    }
+
+    bool VR_New_Patch(HMODULE a_skee)
+    {
+        bool isPatched = false;
+
+        // sub_180079B00 / NodeTransformKeys::Load
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x79BBE;
+            // const std::uintptr_t returnAddr = baseAddr + 0x79BCC;
+            // const std::uintptr_t escapeAddr = baseAddr + 0x79D05;
+
+            const char* pattern = "48 8B 30 48 8B 58 08 4C 89 28 4C 89 68 08 48 89 74 24 ? 48 89 5C 24 ? 48 8B 7C 24 ? 48 85 FF";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found NodeTransformKeys::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0xE;
+                log::info("Found NodeTransformKeys::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "FF C5 3B AC 24 ? ? ? ? 0F 82 ? ? ? ? 40 0F B6 C7 48 8B 9C 24 ? ? ? ? 48 81 C4 B0 00 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
+                const std::uintptr_t preEscapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (preEscapeAddr)
+                {
+                    const std::uintptr_t escapeAddr = preEscapeAddr + 0x13;
+                    log::info("Found NodeTransformKeys::Load Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            mov(rsi, ptr[rax]);
+                            mov(rbx, ptr[rax + 8]);
+                            mov(ptr[rax], r13);
+                            mov(ptr[rax + 8], r13);
+
+                            // check nullptr
+                            test(rsi, rsi);
+                            jz("IsNull");
+
+                            push(rax);
+                            mov(rax, retAddr);
+                            xchg(qword[rsp], rax);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(NodeTransformKeys_Error));
+                    patch.ready();
+                    std::uint8_t jumpPayload[14] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 14, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 14);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 14, oldProtect, &oldProtect);
+                        isSuccess = true;
+                        isPatched = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("NodeTransformKeys::Load patch done");
+            else
+                log::error("Failed to NodeTransformKeys::Load patch");
+        }
+
+        // sub_180094AD0 / OverrideRegistration<StringTableItem>::Load
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x94BD8;
+            // const std::uintptr_t returnAddr = baseAddr + 0x94BE8;
+            // const std::uintptr_t escapeAddr = baseAddr + 0x94CFD;
+
+            const char* pattern = "49 8B 4D 38 48 23 4E 20 48 C1 E1 04 49 8B 45 20 48 03 C1 48 8B 48 08 49 8B 55 10 48 3B CA 74 ? 48 8B 00 48 3B 71 10 74 ? 48 3B C8 74 ? 48 8B 49 08";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found OverrideRegistration<StringTableItem>::Load Hook Address: {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x10;
+                log::info("Found OverrideRegistration<StringTableItem>::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "48 8B 9C 24 ? ? ? ? 48 81 C4 80 00 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3 4C 8D 4D ? 48 8D 15 ? ? ? ? 48 8D 0D ? ? ? ? E8 ? ? ? ? B0 01 EB ?";
+                const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (escapeAddr)
+                {
+                    log::info("Found OverrideRegistration<StringTableItem>::Load Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            // check nullptr
+                            test(rsi, rsi);
+                            jz("IsNull");
+
+                            mov(rcx, ptr[r13 + 0x38]);
+                            and_(rcx, ptr[rsi + 0x20]);
+                            shl(rcx, 4);
+                            mov(rax, ptr[r13 + 0x20]);
+
+                            push(rax);
+                            mov(rax, retAddr);
+                            xchg(qword[rsp], rax);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(OverrideRegistration_StringTableItem_Error));
+                    patch.ready();
+
+                    std::uint8_t jumpPayload[16] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x90, 0x90};
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 16, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 16);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 16, oldProtect, &oldProtect);
+                        isSuccess = true;
+                        isPatched = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("OverrideRegistration<StringTableItem>::Load patch done");
+            else
+                log::error("Failed to OverrideRegistration<StringTableItem>::Load patch");
+        }
+
+        // sub_180010040 / BodyMorphData::Load / morphName
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x101A0;
+            // const std::uintptr_t returnAddr = baseAddr + 0x101B2;
+            // const std::uintptr_t escapeAddr = baseAddr + 0x107B7;
+
+            const char* pattern = "90 C7 44 24 ? 00 00 00 00 48 8B 43 50 BA 04 00 00 00 48 8D 4C 24 ? FF D0 85 C0 0F 84 ? ? ? ? 4C 8B 74 24 ? 49 8B D6 49 8D 46 18 48 89 44 24 ?";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found BodyMorphData::Load::morphName Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x12;
+                log::info("Found BodyMorphData::Load::morphName Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "B0 01 EB 02 32 C0 48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 0F 28 B4 24 ? ? ? ? 48 81 C4 B0 02 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
+                const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (escapeAddr)
+                {
+                    log::info("Found BodyMorphData::Load::morphName Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            nop();
+                            mov(dword[rsp + 0x34], 0);
+                            mov(rax, ptr[rbx + 0x50]);
+                            mov(edx, 4);
+
+                            // check nullptr
+                            mov(rcx, qword[rsp + 0x88]);
+                            test(rcx, rcx);
+                            jz("IsNull");
+
+                            push(r11);
+                            mov(r11, retAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(BodyMorphData_morphName_Error));
+                    patch.ready();
+                    std::uint8_t jumpPayload[18] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x90, 0x90, 0x90, 0x90
+                    };
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 18, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 18);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 18, oldProtect, &oldProtect);
+                        isSuccess = true;
+                        isPatched = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("BodyMorphData::Load::morphName patch done");
+            else
+                log::error("Failed to BodyMorphData::Load::morphName patch");
+        }
+
+        // sub_180010040 / BodyMorphData::Load / keyName
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x10176;
+            // const std::uintptr_t returnAddr = baseAddr + 0x10185;
+            // const std::uintptr_t escapeAddr = baseAddr + 0x107B7;
+
+            const char* pattern = "90 44 89 7C 24 ? 83 7C 24 ? 00 0F 86 ? ? ? ? 66 0F 1F 84 00 00 00 00 00 4C 8B C6 48 8B D3 48 8D 4C 24 ? E8 ? ? ? ? 90 C7 44 24 ? 00 00 00 00";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found BodyMorphData::Load::keyName Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0xF;
+                log::info("Found BodyMorphData::Load::keyName Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "B0 01 EB 02 32 C0 48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 0F 28 B4 24 ? ? ? ? 48 81 C4 B0 02 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
+                const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (escapeAddr)
+                {
+                    log::info("Found BodyMorphData::Load::keyName Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            nop();
+                            mov(dword[rsp + 0x34], r15d);
+                            mov(rax, ptr[rbx + 0x50]);
+                            mov(edx, 4);
+
+                            // check nullptr
+                            mov(rcx, qword[rsp + 0x88]);
+                            test(rcx, rcx);
+                            jz("IsNull");
+
+                            push(r11);
+                            mov(r11, retAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(BodyMorphData_keyName_Error));
+                    patch.ready();
+                    std::uint8_t jumpPayload[15] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x90
+                    };
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 15, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 15);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 15, oldProtect, &oldProtect);
+                        isSuccess = true;
+                        isPatched = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("BodyMorphData::Load::keyName patch done");
+            else
+                log::error("Failed to BodyMorphData::Load::keyName patch");
+        }
+        
+        return isPatched;
+    }
+
+    void GOG_RefInfo(HMODULE a_skee)
+    {
+        // sub_180094180 / NodeTransformRegistrationMapHolder::Load::Internal
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x941E9;
+            // const std::uintptr_t returnAddr = baseAddr + 0x941FC;
+
+            // const std::uintptr_t target1Addr = baseAddr + 0x81C80;
+            // const std::uintptr_t target2Addr = baseAddr + 0x944C0;
+
+            const char* pattern = "4C 8D 3D ? ? ? ? 4C 89 7C 24 ? 4C 8D 0D ? ? ? ? BA 80 00 00 00 44 8D 42 82 48 8D 4C 24 ? E8 ? ? ? ? 90 4C 8B CB 48 8B D7 48 8D 4C 24 ?";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found NodeTransformRegistrationMapHolder::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x13;
+                log::info("Found NodeTransformRegistrationMapHolder::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::int32_t offset1 = *reinterpret_cast<std::int32_t*>(hookAddr + 0x3);
+                const std::uintptr_t target1Addr = (hookAddr + 0x7) + offset1;
+                log::info("Found NodeTransformRegistrationMapHolder::Load Target1 Address {:X}", target1Addr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t lea2Addr = hookAddr + 0xC;
+                const std::int32_t offset2 = *reinterpret_cast<int32_t*>(lea2Addr + 0x3);
+                const std::uintptr_t target2Addr = (lea2Addr + 0x7) + offset2;
+                log::info("Found NodeTransformRegistrationMapHolder::Load Target2 Address {:X}", target2Addr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                struct Patch : Xbyak::CodeGenerator
+                {
+                    Patch(std::uintptr_t retAddr, std::uintptr_t funcAddr, std::uintptr_t tar1Addr, std::uintptr_t tar2Addr)
+                    {
+                        // backup
+                        pushfq();
+                        push(rax);
+                        push(rcx);
+                        push(rdx);
+                        push(r8);
+                        push(r9);
+                        push(r10);
+                        push(r11);
+
+                        mov(rcx, qword[rsp + 0x80]);
+
+                        push(rbp);
+                        mov(rbp, rsp);
+                        and_(rsp, -16);
+                        sub(rsp, 0x20);
+
+                        // get ref handle
+                        mov(rax, funcAddr);
+                        call(rax);
+
+                        mov(rsp, rbp);
+                        pop(rbp);
+
+                        // revert
+                        pop(r11);
+                        pop(r10);
+                        pop(r9);
+                        pop(r8);
+                        pop(rdx);
+                        pop(rcx);
+                        pop(rax);
+                        popfq();
+
+                        mov(rax, tar1Addr);
+                        mov(qword[rsp + 0x20], rax);
+                        mov(r9, tar2Addr);
+
+                        push(r11);
+                        mov(r11, retAddr);
+                        xchg(qword[rsp], r11);
+                        ret();
+                    }
+                };
+
+                static Patch patch(returnAddr, reinterpret_cast<std::uintptr_t>(GetHandle), target1Addr, target2Addr);
+                patch.ready();
+                std::uint8_t jumpPayload[19] = {
+                    0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x90, 0x90, 0x90, 0x90, 0x90};
+                *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                DWORD oldProtect;
+                if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 19, PAGE_EXECUTE_READWRITE, &oldProtect))
+                {
+                    memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 19);
+                    VirtualProtect(reinterpret_cast<void*>(hookAddr), 19, oldProtect, &oldProtect);
+                    isSuccess = true;
+                }
+            }
+
+            if (isSuccess)
+                log::info("NodeTransformRegistrationMapHolder::Load hook handle done");
+            else
+                log::error("Failed to NodeTransformRegistrationMapHolder::Load hook handle");
+        }
+
+        // sub_180017A20 / ActorMorphs::Load
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x17A9E;
+            // const std::uintptr_t returnAddr = baseAddr + 0x17AAF;
+
+            const char* pattern = "45 33 ED 4C 89 6C 24 ? 4C 89 6C 24 ? 41 8D 4D 38 E8 ? ? ? ? 48 89 00 48 89 40 08 48 89 40 10 66 C7 40 18 01 01 48 89 44 24 ? 0F 57 C0";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found ActorMorphs::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x11;
+                log::info("Found ActorMorphs::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                struct Patch : Xbyak::CodeGenerator
+                {
+                    Patch(std::uintptr_t retAddr, std::uintptr_t funcAddr)
+                    {
+                        // backup
+                        pushfq();
+                        push(rax);
+                        push(rcx);
+                        push(rdx);
+                        push(r8);
+                        push(r9);
+                        push(r10);
+                        push(r11);
+
+                        cmp(r12d, 3);
+                        jb("IsHandle");
+
+                        mov(ecx, dword[rsp + 0x90]);
+                        jmp("GetFormID");
+
+                        L("IsHandle");
+                        // use low 32bit
+                        mov(ecx, dword[rsp + 0xA0]);
+
+                        L("GetFormID");
+                        // get formID
+                        push(rbp);
+                        mov(rbp, rsp);
+                        and_(rsp, -16);
+                        sub(rsp, 0x20);
+
+                        mov(rax, funcAddr);
+                        call(rax);
+
+                        mov(rsp, rbp);
+                        pop(rbp);
+
+                        // revert
+                        pop(r11);
+                        pop(r10);
+                        pop(r9);
+                        pop(r8);
+                        pop(rdx);
+                        pop(rcx);
+                        pop(rax);
+                        popfq();
+
+                        xor_(r13d, r13d);
+                        mov(qword[rsp + 0x40], r13);
+                        mov(qword[rsp + 0x48], r13);
+                        lea(ecx, ptr[r13 + 0x38]);
+
+                        push(rax);
+                        mov(rax, retAddr);
+                        xchg(qword[rsp], rax);
+                        ret();
+                    }
+                };
+
+                static Patch patch(returnAddr, reinterpret_cast<std::uintptr_t>(GetFormID));
+                patch.ready();
+                std::uint8_t jumpPayload[17] = {
+                    0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x90, 0x90, 0x90
+                };
+                *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                DWORD oldProtect;
+                if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 17, PAGE_EXECUTE_READWRITE, &oldProtect))
+                {
+                    memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 17);
+                    VirtualProtect(reinterpret_cast<void*>(hookAddr), 17, oldProtect, &oldProtect);
+                    isSuccess = true;
+                }
+            }
+
+            if (isSuccess)
+                log::info("ActorMorphs::Load hook formID done");
+            else
+                log::error("Failed to ActorMorphs::Load hook formID");
+        }
+    }
+
+    void GOG_Patch(HMODULE a_skee)
+    {
+        // sub_180093E70 / NodeTransformKeys::Load
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x93F22;
+            // const std::uintptr_t returnAddr = baseAddr + 0x93F30;
+            // const std::uintptr_t escapeAddr = baseAddr + 0x940B2;
+
+            const char* pattern = "48 8B 38 48 8B 48 08 4C 89 28 4C 89 68 08 48 89 7D ? 48 89 4D ? 48 8B 5D ? 48 85 DB 74 ? B8 FF FF FF FF F0 0F C1 43 08 83 F8 01 75 ? 48 8B 03 48 8B CB FF 10";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found NodeTransformKeys::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0xE;
+                log::info("Found NodeTransformKeys::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "FF C6 3B 75 ? 0F 82 ? ? ? ? 40 0F B6 C7 48 8B 9C 24 ? ? ? ? 48 81 C4 C0 00 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
+                const std::uintptr_t preEscapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (preEscapeAddr)
+                {
+                    const std::uintptr_t escapeAddr = preEscapeAddr + 0xF;
+                    log::info("Found NodeTransformKeys::Load Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            mov(rdi, ptr[rax]);
+                            mov(rcx, ptr[rax + 8]);
+                            mov(ptr[rax], r13);
+                            mov(ptr[rax + 8], r13);
+
+                            // check nullptr
+                            test(rdi, rdi);
+                            jz("IsNull");
+
+                            push(r11);
+                            mov(r11, retAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(NodeTransformKeys_Error));
+                    patch.ready();
+                    std::uint8_t jumpPayload[14] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 14, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 14);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 14, oldProtect, &oldProtect);
+                        isSuccess = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("NodeTransformKeys::Load patch done");
+            else
+                log::error("Failed to NodeTransformKeys::Load patch");
+        }
+
+        // sub_1800B2CF0 / OverrideRegistration<StringTableItem>::Load
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0xB2DF0;
+            // const std::uintptr_t returnAddr = baseAddr + 0xB2E00;
+            // const std::uintptr_t escapeAddr = baseAddr + 0xB2F17;
+
+            const char* pattern = "49 8B 4E 38 48 23 4F 20 48 C1 E1 04 49 03 4E 20 48 8B 41 08 49 8B 56 10 48 3B C2 74 ? 48 8B 09 48 3B 78 10 74 ? 48 3B C1 74 ? 48 8B 40 08";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found OverrideRegistration<StringTableItem>::Load Hook Address: {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x10;
+                log::info("Found OverrideRegistration<StringTableItem>::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "48 8B 9C 24 ? ? ? ? 48 81 C4 80 00 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3 4C 8D 4D ? 48 8D 15 ? ? ? ? 48 8D 0D ? ? ? ? E8 ? ? ? ? B0 01 EB ?";
+                const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (escapeAddr)
+                {
+                    log::info("Found OverrideRegistration<StringTableItem>::Load Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            // check nullptr
+                            test(rdi, rdi);
+                            jz("IsNull");
+
+                            mov(rcx, ptr[r14 + 0x38]);
+                            and_(rcx, ptr[rdi + 0x20]);
+                            shl(rcx, 4);
+                            add(rcx, ptr[r14 + 0x20]);
+
+                            push(rax);
+                            mov(rax, retAddr);
+                            xchg(qword[rsp], rax);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(OverrideRegistration_StringTableItem_Error));
+                    patch.ready();
+
+                    std::uint8_t jumpPayload[16] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x90, 0x90};
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 16, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 16);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 16, oldProtect, &oldProtect);
+                        isSuccess = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("OverrideRegistration<StringTableItem>::Load patch done");
+            else
+                log::error("Failed to OverrideRegistration<StringTableItem>::Load patch");
+        }
+
+        // sub_180017240 / BodyMorphData::Load morphName
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x17341;
+            // const std::uintptr_t returnAddr = baseAddr + 0x1734F;
+            // const std::uintptr_t escapeAddr = baseAddr + 0x17967;
+
+            const char* pattern = "44 89 7C 24 ? 48 8B 43 50 BA 04 00 00 00 48 8D 4C 24 ? FF D0 85 C0 0F 84 ? ? ? ? C7 45 ? 00 00 00 00 4C 89 7D ? 4C 89 7D ? B9 28 00 00 00 E8 ? ? ? ?";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found BodyMorphData::Load::morphName Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0xE;
+                log::info("Found BodyMorphData::Load::morphName Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "B0 01 EB 02 32 C0 48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 48 81 C4 D0 02 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
+                const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (escapeAddr)
+                {
+                    log::info("Found BodyMorphData::Load::morphName Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            mov(dword[rsp + 0x28], r15d);
+                            mov(rax, qword[rbx + 0x50]);
+                            mov(edx, 4);
+                            mov(rcx, qword[rsp + 0x40]);
+
+                            // check nullptr
+                            test(rcx, rcx);
+                            jz("IsNull");
+
+                            push(r11);
+                            mov(r11, retAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(BodyMorphData_morphName_Error));
+                    patch.ready();
+                    std::uint8_t jumpPayload[14] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 14, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 14);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 14, oldProtect, &oldProtect);
+                        isSuccess = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("BodyMorphData::Load::morphName patch done");
+            else
+                log::error("Failed to BodyMorphData::Load::morphName patch");
+        }
+
+        // sub_180017240 / BodyMorphData::Load / keyName
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0x173E1;
+            // const std::uintptr_t returnAddr = baseAddr + 0x173F2;
+            // const std::uintptr_t escapeAddr = baseAddr + 0x17967;
+
+            const char* pattern = "C7 44 24 ? 00 00 00 00 48 8B 43 50 BA 04 00 00 00 48 8D 4C 24 ? FF D0 85 C0 0F 84 ? ? ? ? 48 8B 74 24 ? 48 8B D6 48 83 7E 18 10 72 ? 48 8B 16 4C 89 7D ?";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found BodyMorphData::Load::keyName Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                const std::uintptr_t returnAddr = hookAddr + 0x11;
+                log::info("Found BodyMorphData::Load::keyName Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "B0 01 EB 02 32 C0 48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 48 81 C4 D0 02 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
+                const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (escapeAddr)
+                {
+                    log::info("Found BodyMorphData::Load::keyName Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            mov(dword[rsp + 0x40], 0);
+                            mov(rax, qword[rbx + 0x50]);
+                            mov(edx, 4);
+                            mov(rcx, qword[rsp + 0x190]);
+
+                            // check nullptr
+                            test(rcx, rcx);
+                            jz("IsNull");
+
+                            push(r11);
+                            mov(r11, retAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(BodyMorphData_keyName_Error));
+                    patch.ready();
+                    std::uint8_t jumpPayload[17] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x90, 0x90, 0x90};
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 17, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 17);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 17, oldProtect, &oldProtect);
+                        isSuccess = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("BodyMorphData::Load::keyName patch done");
+            else
+                log::error("Failed to BodyMorphData::Load::keyName patch");
+        }
+    }
+
     void AE_RefInfo(HMODULE a_skee)
     {
         // sub_1800C4100 / NodeTransformRegistrationMapHolder::Load::Internal
@@ -714,19 +2123,19 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found NodeTransformRegistrationMapHolder::Load::morphName Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformRegistrationMapHolder::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0x13;
-                log::info("Found NodeTransformRegistrationMapHolder::Load Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformRegistrationMapHolder::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::int32_t offset1 = *reinterpret_cast<std::int32_t*>(hookAddr + 0x3);
                 const std::uintptr_t target1Addr = (hookAddr + 0x7) + offset1;
-                log::info("Found NodeTransformRegistrationMapHolder::Load::morphName Target1 Address {:x}", target1Addr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformRegistrationMapHolder::Load Target1 Address {:X}", target1Addr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t lea2Addr = hookAddr + 0xC;
                 const std::int32_t offset2 = *reinterpret_cast<int32_t*>(lea2Addr + 0x3);
                 const std::uintptr_t target2Addr = (lea2Addr + 0x7) + offset2;
-                log::info("Found NodeTransformRegistrationMapHolder::Load::morphName Target2 Address {:x}", target2Addr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformRegistrationMapHolder::Load Target2 Address {:X}", target2Addr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 struct Patch : Xbyak::CodeGenerator
                 {
@@ -810,10 +2219,10 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found ActorMorphs::Load::morphName Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found ActorMorphs::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0xF;
-                log::info("Found ActorMorphs::Load Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found ActorMorphs::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 struct Patch : Xbyak::CodeGenerator
                 {
@@ -910,17 +2319,17 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found NodeTransformKeys::Load Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformKeys::Load Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0xE;
-                log::info("Found NodeTransformKeys::Load Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found NodeTransformKeys::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const char* escapePattern = "FF C6 3B 75 ? 0F 82 ? ? ? ? 40 0F B6 C7 48 8B 9C 24 ? ? ? ? 48 81 C4 D0 00 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
                 const std::uintptr_t preEscapeAddr = FindAddressByPattern(a_skee, escapePattern);
                 if (preEscapeAddr)
                 {
                     const std::uintptr_t escapeAddr = preEscapeAddr + 0xF;
-                    log::info("Found NodeTransformKeys::Load Escape Address {:x}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                    log::info("Found NodeTransformKeys::Load Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                     struct Patch : Xbyak::CodeGenerator
                     {
@@ -1004,6 +2413,113 @@ namespace Mus {
                 log::error("Failed to NodeTransformKeys::Load patch");
         }
 
+        // sub_1800E58E0 / OverrideRegistration<StringTableItem>::Load
+        {
+            bool isSuccess = false;
+
+            // const std::uintptr_t hookAddr = baseAddr + 0xE59F4;
+            // const std::uintptr_t returnAddr = baseAddr + 0xE5A04;
+            // const std::uintptr_t escapeAddr = baseAddr + 0xE5B30;
+
+            const char* pattern = "49 8B 4F 38 48 23 4F 20 48 C1 E1 04 49 03 4F 20 48 8B 41 08 49 8B 57 10 48 3B C2 74 ? 48 8B 09 48 3B 78 10 74 ? 66 0F 1F 44 00 00";
+            const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
+            if (hookAddr)
+            {
+                log::info("Found OverrideRegistration<StringTableItem>::Load Hook Address: {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const std::uintptr_t returnAddr = hookAddr + 0x10;
+                log::info("Found OverrideRegistration<StringTableItem>::Load Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                const char* escapePattern = "48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 48 81 C4 A0 01 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3 0F 11 45 ? 4C 89 6D ? 48 C7 45 ? 0F 00 00 00 C6 45 ? 00";
+                const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
+                if (escapeAddr)
+                {
+                    log::info("Found OverrideRegistration<StringTableItem>::Load Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+
+                    struct Patch : Xbyak::CodeGenerator
+                    {
+                        Patch(std::uintptr_t retAddr, std::uintptr_t escAddr, std::uintptr_t funcAddr)
+                        {
+                            // check nullptr
+                            test(rdi, rdi);
+                            jz("IsNull");
+
+                            mov(rcx, ptr[r15 + 0x38]);
+                            and_(rcx, ptr[rdi + 0x20]);
+                            shl(rcx, 4);
+                            add(rcx, ptr[r15 + 0x20]);
+
+                            push(rax);
+                            mov(rax, retAddr);
+                            xchg(qword[rsp], rax);
+                            ret();
+
+                            L("IsNull");
+
+                            // backup
+                            pushfq();
+                            push(rax);
+                            push(rcx);
+                            push(rdx);
+                            push(r8);
+                            push(r9);
+                            push(r10);
+                            push(r11);
+
+                            // call func
+                            push(rbp);
+                            mov(rbp, rsp);
+                            and_(rsp, -16);
+                            sub(rsp, 0x20);
+
+                            mov(rax, funcAddr);
+                            call(rax);
+
+                            mov(rsp, rbp);
+                            pop(rbp);
+
+                            // revert
+                            pop(r11);
+                            pop(r10);
+                            pop(r9);
+                            pop(r8);
+                            pop(rdx);
+                            pop(rcx);
+                            pop(rax);
+                            popfq();
+
+                            mov(al, 1);
+                            push(r11);
+                            mov(r11, escAddr);
+                            xchg(qword[rsp], r11);
+                            ret();
+                        }
+                    };
+
+                    static Patch patch(returnAddr, escapeAddr, reinterpret_cast<std::uintptr_t>(OverrideRegistration_StringTableItem_Error));
+                    patch.ready();
+
+                    std::uint8_t jumpPayload[16] = {
+                        0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x90, 0x90};
+                    *reinterpret_cast<std::uintptr_t*>(&jumpPayload[6]) = reinterpret_cast<std::uintptr_t>(patch.getCode());
+                    DWORD oldProtect;
+                    if (VirtualProtect(reinterpret_cast<void*>(hookAddr), 16, PAGE_EXECUTE_READWRITE, &oldProtect))
+                    {
+                        memcpy(reinterpret_cast<void*>(hookAddr), jumpPayload, 16);
+                        VirtualProtect(reinterpret_cast<void*>(hookAddr), 16, oldProtect, &oldProtect);
+                        isSuccess = true;
+                    }
+                }
+            }
+
+            if (isSuccess)
+                log::info("OverrideRegistration<StringTableItem>::Load patch done");
+            else
+                log::error("Failed to OverrideRegistration<StringTableItem>::Load patch");
+        }
+
         // sub_180025D20 / BodyMorphData::Load morphName
         {
             bool isSuccess = false;
@@ -1016,16 +2532,16 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found BodyMorphData::Load::morphName Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found BodyMorphData::Load::morphName Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const std::uintptr_t returnAddr = hookAddr + 0xE;
-                log::info("Found BodyMorphData::Load::morphName Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found BodyMorphData::Load::morphName Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const char* escapePattern = "B0 01 EB 02 32 C0 48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 48 81 C4 70 03 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
                 const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
                 if (escapeAddr)
                 {
-                    log::info("Found BodyMorphData::Load::morphName Escape Address {:x}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                    log::info("Found BodyMorphData::Load::morphName Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                     struct Patch : Xbyak::CodeGenerator
                     {
@@ -1121,15 +2637,15 @@ namespace Mus {
             const std::uintptr_t hookAddr = FindAddressByPattern(a_skee, pattern);
             if (hookAddr)
             {
-                log::info("Found BodyMorphData::Load::keyName Hook Address {:x}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found BodyMorphData::Load::keyName Hook Address {:X}", hookAddr - reinterpret_cast<std::uintptr_t>(a_skee));
                 const std::uintptr_t returnAddr = hookAddr + 0x11;
-                log::info("Found BodyMorphData::Load::keyName Return Address {:x}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                log::info("Found BodyMorphData::Load::keyName Return Address {:X}", returnAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                 const char* escapePattern = "B0 01 EB 02 32 C0 48 8B 8D ? ? ? ? 48 33 CC E8 ? ? ? ? 48 8B 9C 24 ? ? ? ? 48 81 C4 70 03 00 00 41 5F 41 5E 41 5D 41 5C 5F 5E 5D C3";
                 const std::uintptr_t escapeAddr = FindAddressByPattern(a_skee, escapePattern);
                 if (escapeAddr)
                 {
-                    log::info("Found BodyMorphData::Load::keyName Escape Address {:x}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
+                    log::info("Found BodyMorphData::Load::keyName Escape Address {:X}", escapeAddr - reinterpret_cast<std::uintptr_t>(a_skee));
 
                     struct Patch : Xbyak::CodeGenerator
                     {
@@ -1228,12 +2744,13 @@ namespace Mus {
         noSupport,
         se1597_3_4_5_0,
         vr1415_3_4_5_0,
-        ae161170_0_4_19_16
+        ae161170_0_4_19_16,
+        ae161179_0_4_19_16
     };
     Version GetVersion()
     {
-        LPDWORD handle = 0;
-        DWORD datalen = GetFileVersionInfoSize(GetSKEEDLLName().c_str(), handle);
+        DWORD handle = 0;
+        DWORD datalen = GetFileVersionInfoSize(GetSKEEDLLName().c_str(), &handle);
         if (datalen == 0)
             return Version::noSupport;
         std::vector<BYTE> data(datalen);
@@ -1249,6 +2766,7 @@ namespace Mus {
         std::uint32_t version2 = HIWORD(verinfo->dwFileVersionLS);
         std::uint32_t version3 = LOWORD(verinfo->dwFileVersionLS);
         DLLVersion dllVersion(version0, version1, version2, version3);
+        const auto runtime = REL::Module::get().version();
         if (REL::Module::IsVR())
         {
             if (dllVersion == DLLVersion(3, 4, 5, 0))
@@ -1264,7 +2782,14 @@ namespace Mus {
             else
             {
                 if (dllVersion == DLLVersion(0, 4, 19, 16))
+                {
+                    if (runtime == REL::Version(1, 6, 1179, 0))
+                    {
+                        log::info("Detected GOG");
+                        return Version::ae161179_0_4_19_16;
+                    }
                     return Version::ae161170_0_4_19_16;
+                }
             }
         }
         return Version::noSupport;
@@ -1287,13 +2812,21 @@ namespace Mus {
         }
         break;
         case Version::vr1415_3_4_5_0: {
-            SEVR_RefInfo(skee);
-            SEVR_Patch(skee);
+            if (!VR_New_RefInfo(skee) && !VR_New_Patch(skee))
+            {
+                SEVR_RefInfo(skee);
+                SEVR_Patch(skee);
+            }
         }
         break;
         case Version::ae161170_0_4_19_16: {
             AE_RefInfo(skee);
             AE_Patch(skee);
+        }
+        break;
+        case Version::ae161179_0_4_19_16: {
+            GOG_RefInfo(skee);
+            GOG_Patch(skee);
         }
         break;
         default: {
