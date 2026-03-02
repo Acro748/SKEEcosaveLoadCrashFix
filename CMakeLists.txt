@@ -6,7 +6,7 @@ message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
 ########################################################################################################################
 project(
         SKEEcosaveLoadCrashFix
-        VERSION 1.0.2
+        VERSION 1.1.0
         DESCRIPTION "MuCKKeywordNameConditions by Acro."
         LANGUAGES CXX
 )
