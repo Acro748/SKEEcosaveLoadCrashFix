@@ -7,7 +7,7 @@ message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
 project(
         SKEEcosaveLoadCrashFix
         VERSION 1.1.0
-        DESCRIPTION "MuCKKeywordNameConditions by Acro."
+        DESCRIPTION "Racemenu(SKEE) cosave Load Crash Fix by Acro."
         LANGUAGES CXX
 )
 set(CMAKE_CXX_STANDARD 23)
