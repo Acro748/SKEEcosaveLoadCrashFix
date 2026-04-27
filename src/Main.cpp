@@ -2745,6 +2745,7 @@ namespace Mus {
         se1597_3_4_5_0,
         vr1415_3_4_5_0,
         ae161170_0_4_19_16,
+        ae161170_0_4_20_0,
         ae161179_0_4_19_16
     };
     Version GetVersion()
@@ -2790,6 +2791,10 @@ namespace Mus {
                     }
                     return Version::ae161170_0_4_19_16;
                 }
+                else if (dllVersion == DLLVersion(0, 4, 20, 0))
+                {
+                    return Version::ae161170_0_4_20_0;
+                }
             }
         }
         return Version::noSupport;
@@ -2819,7 +2824,8 @@ namespace Mus {
             }
         }
         break;
-        case Version::ae161170_0_4_19_16: {
+        case Version::ae161170_0_4_19_16:
+        case Version::ae161170_0_4_20_0: {
             AE_RefInfo(skee);
             AE_Patch(skee);
         }

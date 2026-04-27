@@ -6,7 +6,7 @@ message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
 ########################################################################################################################
 project(
         SKEEcosaveLoadCrashFix
-        VERSION 1.1.0
+        VERSION 1.1.1
         DESCRIPTION "Racemenu(SKEE) cosave Load Crash Fix by Acro."
         LANGUAGES CXX
 )
